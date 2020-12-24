@@ -29,7 +29,10 @@ between a b x = a <= x && x <= b
 -- Написать функцию, которая добавляет в соответствующее
 -- поле значения Color значение из ColorPart
 prob8 :: Color -> ColorPart -> Color
-prob8 = error "Implement me!"
+prob8 color part = case part of
+  Red x -> color {red = red color + x}
+  Green x -> color {green = green color + x}
+  Blue x -> color {blue = blue color + x}
 
 ------------------------------------------------------------
 -- PROBLEM #9
@@ -37,7 +40,10 @@ prob8 = error "Implement me!"
 -- Написать функцию, которая возвращает значение из
 -- ColorPart
 prob9 :: ColorPart -> Int
-prob9 = error "Implement me!"
+prob9 colorPart = case colorPart of
+    Red int   -> int
+    Green int -> int
+    Blue int  -> int
 
 ------------------------------------------------------------
 -- PROBLEM #10
@@ -45,14 +51,32 @@ prob9 = error "Implement me!"
 -- Написать функцию, которая возвращает компонент Color, у
 -- которого наибольшее значение (если такой единственный)
 prob10 :: Color -> Maybe ColorPart
-prob10 = error "Implement me!"
+prob10 color
+    | length getMaxValues > 1 = Nothing
+    | otherwise = find (\part -> prob9 part == maximum valuesList) colorsList
+    where
+        colorsList =
+            [
+                Red   $ color & red,
+                Green $ color & green,
+                Blue  $ color & blue
+            ]
+        valuesList = map prob9 colorsList
+        getMaxValues = filter (\part -> prob9 part == maximum valuesList) colorsList
 
 ------------------------------------------------------------
 -- PROBLEM #11
 --
 -- Найти сумму элементов дерева
 prob11 :: Num a => Tree a -> a
-prob11 = error "Implement me!"
+prob11 tree =
+    root tree +
+    fmap prob11 (left tree) `orElse` 0 +
+    fmap prob11 (right tree) `orElse` 0
+
+orElse :: Maybe a -> a -> a
+orElse (Just x) _ = x
+orElse Nothing x = x
 
 ------------------------------------------------------------
 -- PROBLEM #12
@@ -63,7 +87,18 @@ prob11 = error "Implement me!"
 -- а все элементы правого поддерева -- не меньше элемента
 -- в узле)
 prob12 :: Ord a => Tree a -> Bool
-prob12 = error "Implement me!"
+prob12 = checkTree
+
+checkTree :: Ord a => Tree a -> Bool
+checkTree tree = checkLeft (left tree) (root tree) && checkRight (right tree) (root tree)
+
+checkRight :: Ord a => Maybe (Tree a) -> a -> Bool
+checkRight Nothing x = True
+checkRight (Just tree) parent = root tree >= parent && checkTree tree
+
+checkLeft :: Ord a => Maybe (Tree a) -> a -> Bool
+checkLeft Nothing x = True
+checkLeft (Just tree) parent = root tree < parent && checkTree tree
 
 ------------------------------------------------------------
 -- PROBLEM #13
