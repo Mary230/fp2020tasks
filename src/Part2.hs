@@ -2,6 +2,10 @@ module Part2 where
 
 import Part2.Types
 
+import Data.Function ((&))
+import Data.List (find)
+import Control.Monad (msum)
+
 ------------------------------------------------------------
 -- PROBLEM #6
 --
@@ -115,29 +119,42 @@ hasValue a (Just tree)
 -- Заменить () на числа в порядке обхода "правый, левый,
 -- корень", начиная с 1
 prob14 :: Tree () -> Tree Int
-prob14 unitTree = traverseTree (getNodesCount unitTree) unitTree
-    where
-        traverseTree :: Int -> Tree () -> Tree Int
-        traverseTree nodeNumber tree = Tree
-            (do
-                leftSubTree <- tree & left
-                return $ traverseTree (pred nodeNumber) leftSubTree)
-            nodeNumber
-            (do
-                rightSubTree <- tree & right
-                return $ traverseTree (getRightDecrementFunc tree nodeNumber) rightSubTree)
+prob14 tree = changeToInt tree 1
 
-        getRightDecrementFunc :: Tree a -> (Int -> Int)
-        getRightDecrementFunc tree = case tree & left of
-            Just leftSubTree -> subtract (getNodesCount leftSubTree + 1)
-            Nothing -> pred
+changeToInt :: Tree () -> Int -> Tree Int
+changeToInt tree currentNum = Tree {left = leftTree, root = num, right = rightTree}
+  where
+    rightTree = getTree (right tree) currentNum
+    rightNum = getRootNum rightTree
+      where
+        getRootNum :: Maybe (Tree Int) -> Int
+        getRootNum Nothing = currentNum
+        getRootNum (Just tree) = root tree + 1
+       
+    leftTree = getTree (left tree) rightNum
+    num = getNum leftTree
+      where
+        getNum :: Maybe (Tree Int) -> Int
+        getNum Nothing = rightNum
+        getNum (Just tree) = root tree + 1
 
-        getNodesCount :: Tree a -> Int
-        getNodesCount tree = succ $ sum
-            [
-                maybe 0 getNodesCount (tree & left),
-                maybe 0 getNodesCount (tree & right)
-            ]
+getTree :: Maybe (Tree ()) -> Int -> Maybe (Tree Int)
+getTree Nothing x = Nothing
+getTree (Just tree) currentNum = Just (Tree {left = leftTree, root = num, right = rightTree})
+  where
+    rightTree = getTree (right tree) currentNum
+    rightNum = getRootNum rightTree
+      where
+        getRootNum :: Maybe (Tree Int) -> Int
+        getRootNum Nothing = currentNum
+        getRootNum (Just tree) = root tree + 1
+       
+    leftTree = getTree (left tree) rightNum
+    num = getNum leftTree
+      where
+        getNum :: Maybe (Tree Int) -> Int
+        getNum Nothing = rightNum
+        getNum (Just tree) = root tree + 1
 
 
 ------------------------------------------------------------
@@ -171,16 +188,62 @@ prob16 tree = maybe tree rotateRight (left tree)
 -- разница высот поддеревьев не превосходила по модулю 1
 -- (например, преобразовать в полное бинарное дерево)
 prob17 :: Tree a -> Tree a
-prob17 tree = case buildBalanced (toList tree) of
-                   Just a -> a
-                   Nothing -> tree
- 
-buildBalanced :: [a] -> Maybe (Tree a)
-buildBalanced [] = Nothing
-buildBalanced elts =
-  Just (Tree
-    (buildBalanced $ take half elts)
-    (elts !! half)
-    (buildBalanced $ drop (half + 1) elts))
-  where
-    half = length elts `quot` 2
+prob17 tree
+    | isBalanced tree = tree
+    | otherwise = (prob17 . performRotations . handleSubTrees) tree
+    where
+
+        handleSubTrees :: Tree a -> Tree a
+        handleSubTrees currentTree = currentTree
+            {
+                left = do
+                    leftSubTree <- currentTree & left
+                    return $ prob17 leftSubTree,
+                right = do
+                    rightSubTree <- currentTree & right
+                    return $ prob17 rightSubTree
+            }
+
+        performRotations :: Tree a -> Tree a
+        performRotations currentTree
+            | isBalanced currentTree = currentTree
+
+            | getHeight (currentTree & left) - getHeight (currentTree & right) > 1 =
+                if getHeight (currentTree & left >>= left) > getHeight (currentTree & left >>= right)
+                then prob16 currentTree
+                else leftRightRotation currentTree
+
+            | otherwise =
+                if getHeight (currentTree & right >>= left) > getHeight (currentTree & right >>= right)
+                then rightLeftRotation currentTree
+                else prob15 currentTree
+
+isBalanced :: Tree a -> Bool
+isBalanced tree =
+    abs (getHeight (tree & left) - getHeight (tree & right)) <= 1
+    && maybe True isBalanced (tree & left)
+    && maybe True isBalanced (tree & right)
+
+
+getHeight :: Maybe (Tree a) -> Integer
+getHeight Nothing = 0
+getHeight (Just tree) = succ $ max
+    (getHeight $ tree & left)
+    (getHeight $ tree & right)
+
+
+rightLeftRotation :: Tree a -> Tree a
+rightLeftRotation tree = prob15 $ tree 
+    { 
+        right = do 
+            rightSubTree <- tree & right
+            return $ prob16 rightSubTree
+    }
+
+leftRightRotation :: Tree a -> Tree a
+leftRightRotation tree = prob16 $ tree
+    {
+        left = do
+            leftSubTree <- tree & left
+            return $ prob15 leftSubTree
+    }
