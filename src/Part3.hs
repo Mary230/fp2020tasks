@@ -1,5 +1,8 @@
 module Part3 where
 
+import Data.List (group, nub, sort, find)
+import Data.Bool (bool)
+
 ------------------------------------------------------------
 -- PROBLEM #18
 --
@@ -24,10 +27,23 @@ getPrimeDivisors = getDivisorsWithCurrent 2
 -- разложении числа N (1 <= N <= 10^9). Простые делители
 -- должны быть расположены по возрастанию
 prob19 :: Integer -> [(Integer, Int)]
-prob19 number = map (\divisors -> (head divisors, length divisors)) groupEqualDivisors
-    where
-        groupEqualDivisors :: [[Integer]]
-        groupEqualDivisors = group (getPrimeDivisors number)
+prob19 x = map (\d -> (d, factorize d x)) (primeDivisors x)
+
+primes :: [Integer]
+primes = 2 : filter isPrime [3, 5 ..]
+
+isPrime :: Integer -> Bool
+isPrime 1 = False
+isPrime 2 = True
+isPrime n = all (\p -> n `mod` p /= 0) (takeWhile (\p -> p * p <= n) primes)
+
+primeDivisors :: Integer -> [Integer]
+primeDivisors x = filter isPrime (divisors x)
+
+factorize :: Integer -> Integer -> Int
+factorize divisor number
+  | number `mod` divisor == 0 = 1 + factorize divisor (number `div` divisor)
+  | otherwise = 0
 
 ------------------------------------------------------------
 -- PROBLEM #20
