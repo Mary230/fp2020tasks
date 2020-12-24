@@ -8,7 +8,9 @@ import Part2.Types
 -- Написать функцию, которая преобразует значение типа
 -- ColorLetter в символ, равный первой букве значения
 prob6 :: ColorLetter -> Char
-prob6 = error "Implement me!"
+prob6 RED = 'R'
+prob6 GREEN = 'G'
+prob6 BLUE = 'B'
 
 ------------------------------------------------------------
 -- PROBLEM #7
@@ -16,7 +18,10 @@ prob6 = error "Implement me!"
 -- Написать функцию, которая проверяет, что значения
 -- находятся в диапазоне от 0 до 255 (границы входят)
 prob7 :: ColorPart -> Bool
-prob7 = error "Implement me!"
+prob7 = between 0 255 . prob9
+
+between :: Ord a => a -> a -> a -> Bool
+between a b x = a <= x && x <= b
 
 ------------------------------------------------------------
 -- PROBLEM #8
