@@ -40,10 +40,10 @@ prob8 color part = case part of
 -- Написать функцию, которая возвращает значение из
 -- ColorPart
 prob9 :: ColorPart -> Int
-prob9 colorPart = case colorPart of
-    Red int   -> int
-    Green int -> int
-    Blue int  -> int
+prob9 color = case color of
+  Red x -> x
+  Green x -> x
+  Blue x -> x
 
 ------------------------------------------------------------
 -- PROBLEM #10
