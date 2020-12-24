@@ -107,7 +107,14 @@ checkLeft (Just tree) parent = root tree < parent && checkTree tree
 -- поддерево, в корне которого находится значение, если оно
 -- есть в дереве поиска; если его нет - вернуть Nothing
 prob13 :: Ord a => a -> Tree a -> Maybe (Tree a)
-prob13 = error "Implement me!"
+prob13 a tree = hasValue a (Just tree)
+
+hasValue :: Ord a => a -> Maybe (Tree a) -> Maybe (Tree a)
+hasValue a Nothing = Nothing
+hasValue a (Just tree)
+  | a > root tree = hasValue a (right tree)
+  | a < root tree = hasValue a (left tree)
+  | otherwise = Just tree
 
 ------------------------------------------------------------
 -- PROBLEM #14
@@ -115,7 +122,30 @@ prob13 = error "Implement me!"
 -- Заменить () на числа в порядке обхода "правый, левый,
 -- корень", начиная с 1
 prob14 :: Tree () -> Tree Int
-prob14 = error "Implement me!"
+prob14 unitTree = traverseTree (getNodesCount unitTree) unitTree
+    where
+        traverseTree :: Int -> Tree () -> Tree Int
+        traverseTree nodeNumber tree = Tree
+            (do
+                leftSubTree <- tree & left
+                return $ traverseTree (pred nodeNumber) leftSubTree)
+            nodeNumber
+            (do
+                rightSubTree <- tree & right
+                return $ traverseTree (getRightDecrementFunc tree nodeNumber) rightSubTree)
+
+        getRightDecrementFunc :: Tree a -> (Int -> Int)
+        getRightDecrementFunc tree = case tree & left of
+            Just leftSubTree -> subtract (getNodesCount leftSubTree + 1)
+            Nothing -> pred
+
+        getNodesCount :: Tree a -> Int
+        getNodesCount tree = succ $ sum
+            [
+                maybe 0 getNodesCount (tree & left),
+                maybe 0 getNodesCount (tree & right)
+            ]
+
 
 ------------------------------------------------------------
 -- PROBLEM #15
@@ -123,7 +153,11 @@ prob14 = error "Implement me!"
 -- Выполнить вращение дерева влево относительно корня
 -- (https://en.wikipedia.org/wiki/Tree_rotation)
 prob15 :: Tree a -> Tree a
-prob15 = error "Implement me!"
+prob15 tree = maybe tree rotateLeft (right tree)
+                           where
+                               rotateLeft q = q { left = Just oldRoot }
+                                   where
+                                       oldRoot = tree { right = left q }
 
 ------------------------------------------------------------
 -- PROBLEM #16
@@ -131,7 +165,11 @@ prob15 = error "Implement me!"
 -- Выполнить вращение дерева вправо относительно корня
 -- (https://en.wikipedia.org/wiki/Tree_rotation)
 prob16 :: Tree a -> Tree a
-prob16 = error "Implement me!"
+prob16 tree = maybe tree rotateRight (left tree)
+                  where
+                      rotateRight p = p { right = Just oldRoot }
+                          where
+                              oldRoot = tree { left = right p }
 
 ------------------------------------------------------------
 -- PROBLEM #17
@@ -140,4 +178,16 @@ prob16 = error "Implement me!"
 -- разница высот поддеревьев не превосходила по модулю 1
 -- (например, преобразовать в полное бинарное дерево)
 prob17 :: Tree a -> Tree a
-prob17 = error "Implement me!"
+prob17 tree = case buildBalanced (toList tree) of
+                   Just a -> a
+                   Nothing -> tree
+ 
+buildBalanced :: [a] -> Maybe (Tree a)
+buildBalanced [] = Nothing
+buildBalanced elts =
+  Just (Tree
+    (buildBalanced $ take half elts)
+    (elts !! half)
+    (buildBalanced $ drop (half + 1) elts))
+  where
+    half = length elts `quot` 2
