@@ -52,17 +52,10 @@ prob9 colorPart = case colorPart of
 -- которого наибольшее значение (если такой единственный)
 prob10 :: Color -> Maybe ColorPart
 prob10 color
-    | length getMaxValues > 1 = Nothing
-    | otherwise = find (\part -> prob9 part == maximum valuesList) colorsList
-    where
-        colorsList =
-            [
-                Red   $ color & red,
-                Green $ color & green,
-                Blue  $ color & blue
-            ]
-        valuesList = map prob9 colorsList
-        getMaxValues = filter (\part -> prob9 part == maximum valuesList) colorsList
+  | red color > green color && red color > blue color = Just (Red (red color))
+  | green color > blue color && green color > red color = Just (Green (green color))
+  | blue color > green color && blue color > red color = Just (Blue (blue color))
+  | otherwise = Nothing
 
 ------------------------------------------------------------
 -- PROBLEM #11
